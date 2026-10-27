@@ -1,6 +1,6 @@
 # RealtyLeadsAI Researcher
 
-Initial 0.1.0 release candidate using SDK 5.6.0. Typed inheritance-lead search and
+Version 0.1.0 using SDK 5.6.0. Typed inheritance-lead search and
 lookup call only explicitly granted RealtyLeadsAI business capabilities. The agent
 has no provider key, HTTP client, MCP transport or connection selector.
 
@@ -18,7 +18,6 @@ An approved model and explicit provider read grant are required at installation.
 Use native account settings for key entry, never chat or agent configuration.
 
 Run `dotnet test` and `dotnet run --project src/CSweet.Agent.RealtyLeadsAI -- --self-test`.
-While SDK 5.6.0 publication is pending, tests need a local package feed and a fresh
-package cache. The consumer uses protocol 2.1; its separately reviewed provider requires a protocol
-2.5-compatible host. Manifest and synthetic conversation tests pass. Full installed-host
+Restore the published SDK package from NuGet. The consumer uses protocol 2.1;
+its separately reviewed provider requires a protocol 2.5-compatible host. Manifest and synthetic conversation tests pass. Full installed-host
 conversation acceptance remains a deployment gate.
