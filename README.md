@@ -19,6 +19,6 @@ Use native account settings for key entry, never chat or agent configuration.
 
 Run `dotnet test` and `dotnet run --project src/CSweet.Agent.RealtyLeadsAI -- --self-test`.
 While SDK 5.6.0 publication is pending, tests need a local package feed and a fresh
-package cache. This candidate's consumer protocol declaration is still under
-compatibility review; do not import or release until manifest validation passes.
-Full installed-host conversation acceptance is also outstanding.
+package cache. The consumer uses protocol 2.1; its separately reviewed provider requires a protocol
+2.5-compatible host. Manifest and synthetic conversation tests pass. Full installed-host
+conversation acceptance remains a deployment gate.
