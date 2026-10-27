@@ -1,6 +1,6 @@
 # RealtyLeadsAI Researcher
 
-Version 0.1.0 using SDK 5.6.0. Typed inheritance-lead search and
+Version 0.1.0 using SDK 5.7.0. Typed inheritance-lead search and
 lookup call only explicitly granted RealtyLeadsAI business capabilities. The agent
 has no provider key, HTTP client, MCP transport or connection selector.
 
