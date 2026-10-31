@@ -132,13 +132,14 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
         var key = delegation is { } d ? $"lead-brief:delegation:{d.Id:N}" : $"lead-brief:message:{incoming.MessageId:N}";
         var published = incoming.MessageId == Guid.Empty && delegation is null ? null
             : await _publisher.PublishAsync(result, key, conversation, delegation?.WorkItemId, context, ct);
+        // The marker leads so it survives the platform's truncation of recorded responses.
+        var saved = published is null ? "" : $"Lead brief saved as an artifact with all reviewed fields {published.Marker}\n\n";
         if (result.Leads.Count == 0)
-            return "No subscribed leads matched these filters. You can broaden the geography or relax the score/status filter; I have not run another search." +
-                (published is null ? "" : $"\n\nLead brief saved with the criteria used. {published.Marker}");
+            return saved + "No subscribed leads matched these filters. You can broaden the geography or relax the score/status filter; I have not run another search.";
         var table = result.Leads.Count > ResearchBrief.MaximumChatResults
             ? LeadBriefRenderer.ChatTable(result.Leads.Take(ResearchBrief.MaximumChatResults).ToArray()) + $"\n\nShowing {ResearchBrief.MaximumChatResults} of {result.Leads.Count} leads here; the full set is in the lead brief."
             : LeadBriefRenderer.ChatTable(result.Leads);
-        return published is null ? table : $"{table}\n\nLead brief saved as an artifact with all reviewed fields. {published.Marker}";
+        return saved + table;
     }
 
     // ---- Delegation protocol: deterministic, no model, no outgoing delegation ----
@@ -164,7 +165,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
     {
         var content = delegation.ExecutionEvidence?.Content;
         if (PublishedBrief.ParseMarker(content) is { } artifact)
-            return Task.FromResult<DelegationResponse.FinalOutcome?>(new($"Lead brief delivered as artifact {artifact:D}. Results are provider records for review; no outreach or changes were made.", true));
+            return Task.FromResult<DelegationResponse.FinalOutcome?>(new($"Lead brief delivered {PublishedBrief.MarkerPrefix}{artifact:D}]. Results are provider records for review; no outreach or changes were made.", true));
         if (content is not null && (content.StartsWith(Clarification, StringComparison.Ordinal) || content.StartsWith(CredentialGuidance, StringComparison.Ordinal)))
             return Task.FromResult<DelegationResponse.FinalOutcome?>(new("The assignment could not be run as written; see the analyst's clarification.", false));
         return Task.FromResult<DelegationResponse.FinalOutcome?>(null);

@@ -81,6 +81,9 @@ public sealed class DelegationTests
         Assert.Contains("3 unique lead(s)", artifact.Content); Assert.Contains("1 duplicate(s) removed", artifact.Content);
         Assert.Contains("Owner name: Fixture owner", artifact.Content); Assert.Contains("Deceased name: Fixture person", artifact.Content);
         Assert.Contains("2 Fixture &#124; Ave &#91;x&#93;", artifact.Content); Assert.DoesNotContain("4 Too Many", artifact.Content);
+        var data = LeadBriefRenderer.ParseData(artifact.Content);
+        Assert.NotNull(data); Assert.Equal(3, data!.Count); Assert.Equal("2 Fixture | Ave [x]", data[1].Address); Assert.Equal(88, data[1].Score);
+        Assert.Null(LeadBriefRenderer.ParseData("no data block here"));
 
         var reply = Assert.Single(runtime.Progress).GetProperty("delta").GetString()!;
         Assert.Contains("RealtyLeadsAI returned 3 lead(s)", reply); Assert.Contains($"[lead-brief:{artifactId:D}]", reply);
@@ -145,6 +148,7 @@ public sealed class DelegationTests
         Assert.Equal($"lead-brief:message:{message:N}", artifact!.IdempotencyKey);
         Assert.Contains("No subscribed leads matched these criteria", artifact.Content);
         var reply = Assert.Single(runtime.Progress).GetProperty("delta").GetString()!;
-        Assert.Contains("No subscribed leads matched these filters", reply); Assert.Contains("[lead-brief:", reply);
+        Assert.Contains("No subscribed leads matched these filters", reply); Assert.StartsWith("Lead brief saved", reply); Assert.Contains("[lead-brief:", reply);
+        Assert.Empty(LeadBriefRenderer.ParseData(artifact.Content)!);
     }
 }

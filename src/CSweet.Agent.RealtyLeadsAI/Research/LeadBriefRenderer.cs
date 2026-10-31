@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 
 namespace CSweet.Agent.RealtyLeadsAI;
 
@@ -12,6 +13,9 @@ public static class LeadBriefRenderer
 {
     public const string DocumentType = "realtyleads.lead-brief.v1";
     public const string Disclaimer = "These are provider records, not verified ownership or legal conclusions.";
+    /// <summary>Heading of the machine-readable block managers parse. The JSON carries exactly the eleven reviewed fields.</summary>
+    public const string DataHeading = "## Data (realtyleads.lead-brief.v1)";
+    private static readonly JsonSerializerOptions DataJson = new(JsonSerializerDefaults.Web);
     private const int MaximumCell = 256;
 
     /// <summary>Escapes one provider value for safe inclusion in markdown table cells and lists.</summary>
@@ -57,8 +61,23 @@ public static class LeadBriefRenderer
             b.Append($"- Status: {Cell(l.Status)}\n- Score: {Cell(Score(l.Score))}\n- Deceased ID: {Cell(l.DeceasedId)}\n- Deceased name: {Cell(l.DeceasedName)}\n");
             b.Append($"- City: {Cell(l.CityName)}\n- County: {Cell(l.CountyName)}\n- State: {Cell(l.StateAbbreviation)}\n\n");
         }
+        b.Append(DataHeading).Append("\n\n```json\n").Append(JsonSerializer.Serialize(new { criteria = brief.ToSearch(), leads = result.Leads }, DataJson)).Append("\n```\n");
         return b.ToString();
     }
+
+    /// <summary>Reads the leads back out of a brief's data block. Returns null when the block is absent or malformed.</summary>
+    public static IReadOnlyList<InheritanceLead>? ParseData(string? content)
+    {
+        if (content is null) return null;
+        var start = content.IndexOf(DataHeading, StringComparison.Ordinal);
+        if (start < 0) return null;
+        var open = content.IndexOf("```json\n", start, StringComparison.Ordinal);
+        var close = open < 0 ? -1 : content.IndexOf("\n```", open + 8, StringComparison.Ordinal);
+        if (open < 0 || close < 0) return null;
+        try { return JsonSerializer.Deserialize<BriefData>(content[(open + 8)..close], DataJson)?.Leads; }
+        catch (JsonException) { return null; }
+    }
+    private sealed record BriefData(LeadSearch Criteria, InheritanceLead[] Leads);
 
     public static string Scope(ResearchBrief brief)
     {
