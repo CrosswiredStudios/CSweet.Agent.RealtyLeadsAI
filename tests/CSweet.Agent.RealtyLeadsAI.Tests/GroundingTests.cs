@@ -49,12 +49,10 @@ public sealed class GroundingTests
     }
 
     [Theory]
-    [InlineData("""{"action":"Search","search":{"state":"NY","limit":5},"id":null}""")]
-    [InlineData("""```json
-{"action":"Search","search":{"state":"NY","limit":5},"id":null}
-```""")]
-    [InlineData("""<think>The user wants New York. {not json} </think>Here you go: {"action":"Search","search":{"state":"NY","limit":5},"id":null}""")]
-    [InlineData("""{"action":"Search","search":{"state":"NY","city":"Ne{w} \"York\"","limit":5},"id":null} trailing""")]
+    [InlineData("{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}")]
+    [InlineData("```json\n{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}\n```")]
+    [InlineData("<think>The user wants New York. {not json} </think>Here you go: {\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}")]
+    [InlineData("{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"city\":\"Ne{w} \\\"York\\\"\",\"limit\":5},\"id\":null} trailing")]
     public void ModelAnswerIsParsedFromFencesThinkBlocksAndProse(string text)
     {
         var intent = ModelResearchPlanner.Parse(text);
