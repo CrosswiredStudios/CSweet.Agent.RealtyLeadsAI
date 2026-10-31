@@ -104,7 +104,7 @@ public sealed class DelegationTests
         var incoming = new CommunicationMessageReceivedEvent(Guid.NewGuid(), Chat.ToString(), Manager.ToString(), Brief, null, Guid.NewGuid(), 0, Source);
         await runtime.DeliverEventAsync(AgentWithForbiddenPlanner(), CommunicationEvents.MessageReceived, incoming, identity: Identity());
         var reply = Assert.Single(runtime.Progress).GetProperty("delta").GetString()!;
-        Assert.Contains("returned 1 lead(s)", reply); Assert.DoesNotContain("[lead-brief:", reply);
+        Assert.Contains("**1 inheritance lead ·", reply); Assert.DoesNotContain("[lead-brief:", reply); Assert.DoesNotContain("Full brief", reply);
     }
 
     [Fact]

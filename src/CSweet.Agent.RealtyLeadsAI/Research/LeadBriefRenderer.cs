@@ -51,9 +51,8 @@ public static class LeadBriefRenderer
         var parts = address.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
         if (parts.Count == 0) return Missing;
         var zip = parts.LastOrDefault(p => Regex.IsMatch(p, @"^\d{5}(-\d{4})?$"));
-        var street = Regex.Replace(parts[0], @"^(\d+)\.0\b", "$1");
-        street = TitleCase(street);
-        return Escape(zip is null ? street : $"{street} · {zip[..5]}");
+        var street = Escape(TitleCase(Regex.Replace(parts[0], @"^(\d+)\.0\b", "$1")));
+        return zip is null ? street : $"{street} · {zip[..5]}"; // the separator is ours, not provider text, so it stays unescaped
     }
 
     private static string TitleCase(string value)
