@@ -30,7 +30,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
     private readonly LeadBriefPublisher _publisher = new();
 
     public override string AgentId => "com.crosswiredstudios.agent.realtyleads";
-    public override string Version => "0.2.4";
+    public override string Version => "0.3.0";
 
     public RealtyLeadsAgent() : this(new ModelResearchPlanner()) { }
     public RealtyLeadsAgent(IResearchPlanner planner) => _planner = planner;
@@ -141,14 +141,8 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
         var key = delegation is { } d ? $"lead-brief:delegation:{d.Id:N}" : $"lead-brief:message:{incoming.MessageId:N}";
         var published = incoming.MessageId == Guid.Empty && delegation is null ? null
             : await _publisher.PublishAsync(result, key, conversation, delegation?.WorkItemId, context, ct);
-        // The marker leads so it survives the platform's truncation of recorded responses.
-        var saved = published is null ? "" : $"Lead brief saved as an artifact with all reviewed fields {published.Marker}\n\n";
-        if (result.Leads.Count == 0)
-            return saved + "No subscribed leads matched these filters. You can broaden the geography or relax the score/status filter; I have not run another search.";
-        var table = result.Leads.Count > ResearchBrief.MaximumChatResults
-            ? LeadBriefRenderer.ChatTable(result.Leads.Take(ResearchBrief.MaximumChatResults).ToArray()) + $"\n\nShowing {ResearchBrief.MaximumChatResults} of {result.Leads.Count} leads here; the full set is in the lead brief."
-            : LeadBriefRenderer.ChatTable(result.Leads);
-        return saved + table;
+        // The brief marker leads the reply (as an invisible link definition) so it survives truncation of recorded responses.
+        return LeadBriefRenderer.ChatReply(result, published?.Marker);
     }
 
     // ---- Delegation protocol: deterministic, no model, no outgoing delegation ----

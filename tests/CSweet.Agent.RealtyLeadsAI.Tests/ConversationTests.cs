@@ -35,7 +35,7 @@ public sealed class ConversationTests
             (q, _) => { seen = q; return Task.FromResult(Array.Empty<InheritanceLead>()); });
         // A city keeps this on the planner path; the model's oversized limit is clamped, not refused.
         var reply = await Turn(runtime, "I would like any lead information you have for Austin", new("Search", new(State: "TX", City: "Austin", Limit: 50)));
-        Assert.Contains("No subscribed leads", reply);
+        Assert.Contains("Nothing in the subscription matches", reply);
         Assert.Equal(("TX", "Austin", null, ResearchBrief.MaximumChatResults), (seen!.State, seen.City, seen.County, seen.Limit));
     }
 
@@ -49,7 +49,7 @@ public sealed class ConversationTests
             new CommunicationMessageReceivedEvent(Guid.NewGuid(), Guid.NewGuid().ToString(), "test", "I would like any lead information you have for New York", null, Guid.NewGuid()));
         Assert.Equal(0, plannerCalls);
         Assert.Equal(("NY", 5), (seen!.State, seen.Limit));
-        Assert.Contains("No subscribed leads", runtime.Progress.Single().GetProperty("delta").GetString());
+        Assert.Contains("Nothing in the subscription matches", runtime.Progress.Single().GetProperty("delta").GetString());
     }
 
     [Fact] public async Task ClarificationCarriesTheGroundingReason()
@@ -65,7 +65,7 @@ public sealed class ConversationTests
         var calls = 0;
         var runtime = new AgentTestRuntime().RegisterCapability<LeadSearch, InheritanceLead[]>(RealtyLeadsAgent.ProviderSearch,
             (q, _) => { calls++; Assert.Equal("TX", q.State); return Task.FromResult(Array.Empty<InheritanceLead>()); });
-        Assert.Contains("No subscribed leads", await Turn(runtime, "Search TX", new("Search", new(State: "TX", Limit: 5))));
+        Assert.Contains("Nothing in the subscription matches", await Turn(runtime, "Search TX", new("Search", new(State: "TX", Limit: 5))));
         Assert.Equal(1, calls);
     }
 
