@@ -79,7 +79,8 @@ public sealed class GroundingTests
         Assert.Contains("not a two-letter", Grounding.Explain(new("Search", new(State: "Texas", Limit: 5)), "Texas"));
         var unreadable = Assert.Throws<ModelAnswerUnreadableException>(() => ModelResearchPlanner.Parse("```\nnope `rm -rf` \u0007{\"action\":\"Nope\"}"));
         Assert.Contains("could not be read", unreadable.Diagnostic);
-        Assert.DoesNotContain("`", unreadable.Diagnostic); Assert.DoesNotContain("\u0007", unreadable.Diagnostic);
+        Assert.DoesNotContain("`", unreadable.Diagnostic, StringComparison.Ordinal);
+        Assert.All(unreadable.Diagnostic, c => Assert.False(char.IsControl(c)));
         Assert.True(unreadable.Diagnostic.Length < 260);
     }
 
