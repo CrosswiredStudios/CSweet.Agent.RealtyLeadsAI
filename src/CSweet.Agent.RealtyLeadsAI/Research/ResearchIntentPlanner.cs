@@ -19,6 +19,8 @@ public interface IResearchPlanner
 public sealed class ModelResearchPlanner : IResearchPlanner
 {
     public const int MaximumModelJsonLength = 4096;
+    /// <summary>Reasoning models spend most of this on thinking; the answer itself is under 100 tokens.</summary>
+    public const int MaximumOutputTokens = 2000;
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
     private const string SystemPrompt = """
         Interpret the user's current request for read-only inheritance-lead research.
@@ -37,37 +39,50 @@ public sealed class ModelResearchPlanner : IResearchPlanner
         using var client = context.CreateChatClient(new(incoming.ProviderProfileId, null,
             new(Guid.Parse(incoming.ConversationId), incoming.TurnId, "realtyleads-intent")));
         var response = await client.GetResponseAsync([new ChatMessage(ChatRole.System, SystemPrompt), new ChatMessage(ChatRole.User, text)],
-            new ChatOptions { MaxOutputTokens = 800, Temperature = 0, Reasoning = new ReasoningOptions { Output = ReasoningOutput.None } }, ct);
+            new ChatOptions { MaxOutputTokens = MaximumOutputTokens, Temperature = 0, Reasoning = new ReasoningOptions { Output = ReasoningOutput.None } }, ct);
         return Parse(response.Text);
     }
 
+    private static readonly string[] Actions = ["Search", "Lookup", "Clarify"];
+
     /// <summary>
-    /// Parses the model's answer. Small models often wrap the JSON in a code fence, a think block or a sentence; only the
-    /// first balanced JSON object is read, and it is still bounded by <see cref="MaximumModelJsonLength"/>.
+    /// Parses the model's answer. Small and reasoning models wrap the JSON in code fences, think blocks or prose, and
+    /// their reasoning often quotes the schema template or a draft before the real answer. The last balanced JSON
+    /// object that deserializes to a valid intent wins; each candidate is bounded by <see cref="MaximumModelJsonLength"/>.
     /// </summary>
     public static ResearchIntent Parse(string? text)
     {
-        var json = ExtractJsonObject(text) ?? throw new JsonException();
-        if (json.Length > MaximumModelJsonLength) throw new JsonException();
-        return JsonSerializer.Deserialize<ResearchIntent>(json, Web) ?? throw new JsonException();
+        foreach (var json in ExtractJsonObjects(text))
+        {
+            if (json.Length > MaximumModelJsonLength) continue;
+            ResearchIntent? intent;
+            try { intent = JsonSerializer.Deserialize<ResearchIntent>(json, Web); }
+            catch (JsonException) { continue; }
+            if (intent is not null && Actions.Contains(intent.Action, StringComparer.Ordinal)) return intent;
+        }
+        throw new JsonException("The model answer contained no valid research intent.");
     }
 
-    internal static string? ExtractJsonObject(string? text)
+    /// <summary>
+    /// Balanced <c>{…}</c> candidates starting at each opening brace, latest first, ignoring braces inside JSON strings.
+    /// Starting at every brace (not only top level) means a stray unclosed brace earlier in the text cannot hide the answer.
+    /// </summary>
+    internal static IEnumerable<string> ExtractJsonObjects(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text)) return null;
+        if (string.IsNullOrWhiteSpace(text)) yield break;
         var body = Regex.Replace(text, "<think>.*?</think>", "", RegexOptions.Singleline | RegexOptions.CultureInvariant);
-        var start = body.IndexOf('{');
-        if (start < 0) return null;
-        var depth = 0; var inString = false; var escaped = false;
-        for (var i = start; i < body.Length; i++)
+        for (var start = body.LastIndexOf('{'); start >= 0; start = start == 0 ? -1 : body.LastIndexOf('{', start - 1))
         {
-            var c = body[i];
-            if (inString) { if (escaped) escaped = false; else if (c == '\\') escaped = true; else if (c == '"') inString = false; continue; }
-            if (c == '"') inString = true;
-            else if (c == '{') depth++;
-            else if (c == '}' && --depth == 0) return body[start..(i + 1)];
+            var depth = 0; var inString = false; var escaped = false;
+            for (var i = start; i < body.Length && i - start <= MaximumModelJsonLength; i++)
+            {
+                var c = body[i];
+                if (inString) { if (escaped) escaped = false; else if (c == '\\') escaped = true; else if (c == '"') inString = false; continue; }
+                if (c == '"') inString = true;
+                else if (c == '{') depth++;
+                else if (c == '}' && --depth == 0) { yield return body[start..(i + 1)]; break; }
+            }
         }
-        return null;
     }
 }
 

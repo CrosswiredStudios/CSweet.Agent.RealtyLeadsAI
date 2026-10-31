@@ -53,6 +53,9 @@ public sealed class GroundingTests
     [InlineData("```json\n{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}\n```")]
     [InlineData("<think>The user wants New York. {not json} </think>Here you go: {\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}")]
     [InlineData("{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"city\":\"Ne{w} \\\"York\\\"\",\"limit\":5},\"id\":null} trailing")]
+    [InlineData("Thinking: the template is {\"action\":\"Search|Lookup|Clarify\",\"search\":null,\"id\":null}. Draft: { state: \"NY\" }. Final:\n{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}")]
+    [InlineData("a stray { brace that never closes ... then {\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}")]
+    [InlineData("{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"limit\":5},\"id\":null}\n\nNote: {\"example\":true}")]
     public void ModelAnswerIsParsedFromFencesThinkBlocksAndProse(string text)
     {
         var intent = ModelResearchPlanner.Parse(text);
