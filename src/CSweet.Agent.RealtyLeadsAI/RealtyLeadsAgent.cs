@@ -23,7 +23,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
     internal const string Unavailable = "RealtyLeadsAI or the selected model is unavailable. Check the native account connection, read grant and approved model configuration. No results are available from this turn.";
 
     private static readonly Regex CredentialWords = new("api[ -]?key|secret|password", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex LongToken = new("[A-Za-z0-9_+=.-]{32,}", RegexOptions.CultureInvariant);
+    private static readonly Regex LongToken = new("[A-Za-z0-9_+.-]{32,}", RegexOptions.CultureInvariant);
 
     private readonly IResearchPlanner _planner;
     private readonly LeadResearchService _research = new();
