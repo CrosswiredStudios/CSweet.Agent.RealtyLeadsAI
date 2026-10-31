@@ -28,14 +28,15 @@ public sealed class ConversationTests
         Assert.False(called);
     }
 
-    [Fact] public async Task StateNamedInWordsRunsAStateWideSearchClampedToChatMaximum()
+    [Fact] public async Task PlannerSearchIsClampedToChatMaximum()
     {
         LeadSearch? seen = null;
         var runtime = new AgentTestRuntime().RegisterCapability<LeadSearch, InheritanceLead[]>(RealtyLeadsAgent.ProviderSearch,
             (q, _) => { seen = q; return Task.FromResult(Array.Empty<InheritanceLead>()); });
-        var reply = await Turn(runtime, "I would like any lead information you have for New York", new("Search", new(State: "NY", Limit: 50)));
+        // A city keeps this on the planner path; the model's oversized limit is clamped, not refused.
+        var reply = await Turn(runtime, "I would like any lead information you have for Austin", new("Search", new(State: "TX", City: "Austin", Limit: 50)));
         Assert.Contains("No subscribed leads", reply);
-        Assert.Equal(("NY", null, null, ResearchBrief.MaximumChatResults), (seen!.State, seen.City, seen.County, seen.Limit));
+        Assert.Equal(("TX", "Austin", null, ResearchBrief.MaximumChatResults), (seen!.State, seen.City, seen.County, seen.Limit));
     }
 
     [Fact] public async Task StateOnlyChatNeverConsultsTheModel()
