@@ -23,8 +23,8 @@ public sealed class LeadResearchService
     {
         var leads = await SearchAsync(brief.ToSearch(), context, ct);
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var unique = leads.Where(l => !string.IsNullOrWhiteSpace(l.InheritanceLeadId) && seen.Add(l.InheritanceLeadId)).Take(brief.Limit).ToArray();
-        return new(brief, unique, leads.Length - unique.Length);
+        var distinct = leads.Where(l => !string.IsNullOrWhiteSpace(l.InheritanceLeadId) && seen.Add(l.InheritanceLeadId)).ToArray();
+        return new(brief, distinct.Take(brief.Limit).ToArray(), leads.Length - distinct.Length);
     }
 
     /// <summary>Raw typed search for callers with their own grants; the provider decides what a null state means.</summary>

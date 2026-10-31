@@ -18,7 +18,7 @@ public static class LeadBriefRenderer
     public static string Cell(string? value) => string.IsNullOrWhiteSpace(value) ? "Not supplied" :
         WebUtility.HtmlEncode(new string(value.Take(MaximumCell).Where(c => !char.IsControl(c)).ToArray()))
             .Replace("|", "&#124;").Replace("`", "&#96;").Replace("[", "&#91;").Replace("]", "&#93;")
-            .Replace("*", "&#42;").Replace("_", "&#95;").Replace("\\", "&#92;").Replace("#", "&#35;");
+            .Replace("*", "&#42;").Replace("_", "&#95;").Replace("\\", "&#92;");
 
     private static string Score(double? score) => score is { } s ? s.ToString(CultureInfo.InvariantCulture) : "Not supplied";
 
