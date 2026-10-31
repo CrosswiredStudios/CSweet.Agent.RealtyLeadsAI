@@ -2,11 +2,11 @@
 
 This repository contains one standalone C-Sweet protocol-v2 agent. Its purpose is:
 
-> Searches and looks up subscribed inheritance leads through granted RealtyLeadsAI business capabilities.
+> Lead Research Analyst: turns a bounded research brief (from a manager's delegation or a human request) into a lead brief using granted RealtyLeadsAI read capabilities.
 
 ## Invariants
 
-- Keep `com.crosswiredstudios.agent.realtyleads` and version `0.1.0` synchronized between agent code,
+- Keep `com.crosswiredstudios.agent.realtyleads` and version `0.2.0` synchronized between agent code,
   `csweet-plugin.json`, tests, and releases.
 - The root manifest is the reviewed authority request. Keep `provides`, `requires`, events,
   configuration, credentials, web access, and UI contributions synchronized with implementation
@@ -18,6 +18,10 @@ This repository contains one standalone C-Sweet protocol-v2 agent. Its purpose i
 - Agent work is delivered at least once. Honor cancellation and use stable domain idempotency keys
   for external mutations.
 - Unknown capabilities and events must fail or be ignored safely without leaking sensitive data.
+- `research-brief.v1` lines and provider results never enter a model prompt. The only model use is bounded intent
+  interpretation of plain-language chat, and every interpreted filter must be quoted from the request.
+- Delegation acceptance, work binding, outcome review and update summaries are deterministic overrides; do not
+  reintroduce the SDK's model-backed defaults.
 
 ## Verification
 
