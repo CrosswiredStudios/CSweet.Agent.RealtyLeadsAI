@@ -71,6 +71,19 @@ public sealed class GroundingTests
         Assert.ThrowsAny<JsonException>(() => ModelResearchPlanner.Parse(text));
 
     [Fact]
+    public void RefusalsExplainThemselvesWithoutLeakingAnything()
+    {
+        Assert.Contains("state CA is not named", Grounding.Explain(new("Search", new(State: "CA", Limit: 5)), "Search TX"));
+        Assert.Contains("city is not written", Grounding.Explain(new("Search", new(State: "TX", City: "Austin", Limit: 5)), "leads in Dallas TX"));
+        Assert.Contains("too ambiguous", Grounding.Explain(new("Clarify"), "Thanks"));
+        Assert.Contains("not a two-letter", Grounding.Explain(new("Search", new(State: "Texas", Limit: 5)), "Texas"));
+        var unreadable = Assert.Throws<ModelAnswerUnreadableException>(() => ModelResearchPlanner.Parse("```\nnope `rm -rf` \u0007{\"action\":\"Nope\"}"));
+        Assert.Contains("could not be read", unreadable.Diagnostic);
+        Assert.DoesNotContain("`", unreadable.Diagnostic); Assert.DoesNotContain("\u0007", unreadable.Diagnostic);
+        Assert.True(unreadable.Diagnostic.Length < 260);
+    }
+
+    [Fact]
     public void OversizedJsonIsRejectedEvenWhenBalanced()
     {
         var huge = "{\"action\":\"Search\",\"search\":{\"state\":\"NY\",\"status\":\"" + new string('a', ModelResearchPlanner.MaximumModelJsonLength) + "\"}}";

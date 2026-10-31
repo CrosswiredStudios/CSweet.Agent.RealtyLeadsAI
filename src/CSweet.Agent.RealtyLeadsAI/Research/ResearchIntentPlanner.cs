@@ -60,7 +60,7 @@ public sealed class ModelResearchPlanner : IResearchPlanner
             catch (JsonException) { continue; }
             if (intent is not null && Actions.Contains(intent.Action, StringComparer.Ordinal)) return intent;
         }
-        throw new JsonException("The model answer contained no valid research intent.");
+        throw new ModelAnswerUnreadableException(Diagnostics.Excerpt(text));
     }
 
     /// <summary>
@@ -86,9 +86,53 @@ public sealed class ModelResearchPlanner : IResearchPlanner
     }
 }
 
+/// <summary>
+/// The model's answer held no readable intent. <see cref="Diagnostic"/> is a sanitized, bounded excerpt of that answer,
+/// safe to show the requester so an operator can see what the model produced; it is never a provider record.
+/// </summary>
+public sealed class ModelAnswerUnreadableException(string diagnostic) : JsonException("The model answer contained no valid research intent.")
+{
+    public string Diagnostic { get; } = diagnostic;
+}
+
+/// <summary>Short, sanitized reasons for a refused interpretation. Values are bounded and stripped of control characters.</summary>
+public static class Diagnostics
+{
+    public const int MaximumExcerptLength = 160;
+    private static readonly Regex Unsafe = new(@"[^\p{L}\p{N} .,:;=|""'\-{}\[\]_/()]", RegexOptions.CultureInvariant);
+
+    public static string Excerpt(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "the model returned an empty answer";
+        var compact = Regex.Replace(Unsafe.Replace(text, " "), @"\s+", " ").Trim();
+        if (compact.Length > MaximumExcerptLength) compact = compact[..MaximumExcerptLength] + "…";
+        return $"the model answer could not be read as an intent; it began: {compact}";
+    }
+
+    public static string Value(string? value) =>
+        value is null ? "—" : Regex.Replace(Unsafe.Replace(value, " "), @"\s+", " ").Trim() is { Length: > 0 } v ? (v.Length > 40 ? v[..40] + "…" : v) : "—";
+}
+
 /// <summary>Keeps every interpreted filter literally present in the source request.</summary>
 public static class Grounding
 {
+    /// <summary>Why <see cref="GroundedSearch"/> and <see cref="GroundedLookup"/> both refused an intent, for the requester.</summary>
+    public static string Explain(ResearchIntent intent, string source)
+    {
+        if (intent.Action == "Clarify") return "the model judged the request too ambiguous to search";
+        if (intent.Action == "Lookup") return intent.Id is null ? "a lookup needs a lead ID in UUID format" : $"the lead ID {Diagnostics.Value(intent.Id)} does not appear in the message";
+        if (intent.Action != "Search") return $"the model returned an unknown action {Diagnostics.Value(intent.Action)}";
+        if (intent.Search is not { } q) return "the model returned a search without filters";
+        var summary = $"interpreted state={Diagnostics.Value(q.State)} county={Diagnostics.Value(q.County)} city={Diagnostics.Value(q.City)} status={Diagnostics.Value(q.Status)} limit={q.Limit}";
+        if (!UsStates.IsKnownAbbreviation(q.State)) return $"{summary}; the state is not a two-letter US state code";
+        foreach (var (name, value) in new[] { ("county", q.County), ("city", q.City), ("status", q.Status) })
+            if (!Quoted(source, value)) return $"{summary}; the {name} is not written in the message";
+        if (q.MinScore is { } s && (!double.IsFinite(s) || s is < 0 or > 100 || !Quoted(source, s.ToString(CultureInfo.InvariantCulture)))) return $"{summary}; the minimum score is not written in the message";
+        if (q.City is null && q.County is null && !UsStates.IsNamedIn(source, q.State)) return $"{summary}; the state {q.State} is not named in the message";
+        if (q.Limit < 1) return $"{summary}; the limit must be at least one";
+        return $"{summary}; the request was not grounded";
+    }
+
     public static bool Quoted(string source, string? value) => value is null || value.Length is > 0 and <= 128 &&
         !value.Any(char.IsControl) && Regex.IsMatch(source, @"(?<![\p{L}\p{N}])" + Regex.Escape(value) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase);
 
