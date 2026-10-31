@@ -30,7 +30,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
     private readonly LeadBriefPublisher _publisher = new();
 
     public override string AgentId => "com.crosswiredstudios.agent.realtyleads";
-    public override string Version => "0.2.3";
+    public override string Version => "0.2.4";
 
     public RealtyLeadsAgent() : this(new ModelResearchPlanner()) { }
     public RealtyLeadsAgent(IResearchPlanner planner) => _planner = planner;
@@ -115,6 +115,11 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
         {
             // Structured assignment: never interpreted by a model. Invalid briefs are answered with the exact defect.
             if (brief is null) return $"{briefError} Send a line such as: {ResearchBrief.Prefix} state=TX county=\"Travis\" minScore=70 limit=10";
+        }
+        else if (QuickBrief.TryParse(text) is { } quick)
+        {
+            // One state, no other filters: interpreted deterministically, so the answer never depends on the model.
+            brief = quick;
         }
         else
         {
