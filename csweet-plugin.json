@@ -6,12 +6,16 @@
     "baseType": "individual-contributor",
     "profile": "individual-contributor.v1",
     "declaredRoleKeys": [
-      "general-specialist"
+      "general-specialist",
+      "research-analyst"
+    ],
+    "specializationKeys": [
+      "real-estate-lead-research"
     ]
   },
   "id": "com.crosswiredstudios.agent.realtyleads",
-  "name": "RealtyLeadsAI Researcher",
-  "version": "0.1.0",
+  "name": "RealtyLeadsAI Lead Research Analyst",
+  "version": "0.2.0",
   "publisher": {
     "id": "com.crosswiredstudios",
     "name": "CrosswiredStudios"
@@ -281,27 +285,77 @@
     {
       "name": "realtyleads.inheritance.search.v1",
       "scope": "organization",
-      "purpose": "Search subscribed inheritance leads.",
+      "purpose": "Run one bounded inheritance-lead search per assignment.",
       "dependency": "realtyleads",
       "modelVisible": false
     },
     {
       "name": "realtyleads.inheritance.lookup.v1",
       "scope": "organization",
-      "purpose": "Look up a subscribed inheritance lead.",
+      "purpose": "Look up one subscribed inheritance lead by its returned ID.",
       "dependency": "realtyleads",
       "modelVisible": false
     },
     {
       "name": "platform.llm.chat-stream.v1",
       "scope": "organization",
-      "purpose": "Interpret a bounded human research request using an approved model; provider results are never sent to the model.",
+      "purpose": "Interpret a bounded human research request using an approved model; provider results and research-brief lines are never sent to the model.",
+      "modelVisible": false
+    },
+    {
+      "name": "platform.artifact.create.v1",
+      "scope": "organization",
+      "purpose": "Save each delivered lead brief as a revisioned artifact with the reviewed fields.",
+      "modelVisible": false
+    },
+    {
+      "name": "work.delegation.create.v1",
+      "scope": "organization",
+      "purpose": "Required by the shared runtime to route a manager's accepted assignment to this analyst; the analyst never delegates.",
+      "modelVisible": false
+    },
+    {
+      "name": "work.delegation.read.v1",
+      "scope": "organization",
+      "purpose": "Read the assignment being acknowledged or executed.",
+      "modelVisible": false
+    },
+    {
+      "name": "work.delegation.respond.v1",
+      "scope": "organization",
+      "purpose": "Accept, clarify, report progress on and close assignments deterministically.",
+      "modelVisible": false
+    },
+    {
+      "name": "work.delegation.publish.v1",
+      "scope": "organization",
+      "purpose": "Shared runtime reporting of assignment updates.",
+      "modelVisible": false
+    },
+    {
+      "name": "work.tracking.read.v1",
+      "scope": "organization",
+      "purpose": "Shared runtime tracking reads.",
+      "modelVisible": false
+    },
+    {
+      "name": "work.tracking.pending.v1",
+      "scope": "organization",
+      "purpose": "Shared runtime bounded recovery of missed tracking updates.",
+      "modelVisible": false
+    },
+    {
+      "name": "work.tracking.processed.v1",
+      "scope": "organization",
+      "purpose": "Shared runtime acknowledgement of processed tracking updates.",
       "modelVisible": false
     }
   ],
   "events": {
     "subscribes": [
-      "com.csweet.user.message.received.v1"
+      "com.csweet.user.message.received.v1",
+      "com.csweet.work.delegation.received.v1",
+      "com.csweet.work.tracking.changed.v1"
     ]
   },
   "configuration": [],
@@ -312,22 +366,27 @@
   },
   "ui": [],
   "catalog": {
-    "summary": "Research subscribed inheritance leads through the approved RealtyLeadsAI connection.",
-    "longDescription": "Handles a bounded request and returns a clear, structured result for the team to review.",
+    "summary": "Lead Research Analyst: runs bounded RealtyLeadsAI inheritance-lead research from manager assignments or chat and delivers lead briefs.",
+    "longDescription": "Takes a research brief (state, county/city, status, minimum score, limit) from a manager's assignment or a human request, runs exactly one read-only RealtyLeadsAI search through the explicitly granted connection, de-duplicates the records and delivers a lead brief with all reviewed fields. No outreach, record changes or hidden broadening.",
     "imageUrl": null,
     "companyLogoUrl": null,
     "accentColor": "#1C6252",
     "category": "General",
     "role": {
-      "key": "realtyleads-researcher",
-      "name": "RealtyLeadsAI Researcher"
+      "key": "realtyleads-research-analyst",
+      "name": "Lead Research Analyst"
     },
     "license": {
       "spdxId": "MIT"
     },
     "iconUrls": [],
     "roleAliases": [],
-    "keywords": [],
+    "keywords": [
+      "real-estate",
+      "leads",
+      "research",
+      "inheritance"
+    ],
     "documentationUrl": "README.md"
   },
   "dependencies": [
@@ -335,7 +394,7 @@
       "id": "realtyleads",
       "pluginId": "com.crosswiredstudios.plugin.realtyleads",
       "publisherId": "com.crosswiredstudios",
-      "minimumVersion": "0.1.0",
+      "minimumVersion": "0.2.0",
       "maximumVersionExclusive": "1.0.0"
     }
   ]
