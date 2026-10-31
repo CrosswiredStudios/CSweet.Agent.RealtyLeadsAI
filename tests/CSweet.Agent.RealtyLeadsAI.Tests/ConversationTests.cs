@@ -38,6 +38,14 @@ public sealed class ConversationTests
         Assert.Equal(("NY", null, null, ResearchBrief.MaximumChatResults), (seen!.State, seen.City, seen.County, seen.Limit));
     }
 
+    [Fact] public async Task ClarificationCarriesTheGroundingReason()
+    {
+        var runtime = new AgentTestRuntime().RegisterCapability<LeadSearch, InheritanceLead[]>(RealtyLeadsAgent.ProviderSearch,
+            (_, _) => Task.FromResult(Array.Empty<InheritanceLead>()));
+        var reply = await Turn(runtime, "Search TX", new("Search", new(State: "CA", Limit: 5)));
+        Assert.Contains("Which state", reply); Assert.Contains("(Why: interpreted state=CA", reply); Assert.Contains("not named in the message", reply);
+    }
+
     [Fact] public async Task EmptyResultsAreHonestAndDoNotBroadenSearch()
     {
         var calls = 0;

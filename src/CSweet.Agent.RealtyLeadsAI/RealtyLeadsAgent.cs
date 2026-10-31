@@ -30,7 +30,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
     private readonly LeadBriefPublisher _publisher = new();
 
     public override string AgentId => "com.crosswiredstudios.agent.realtyleads";
-    public override string Version => "0.2.2";
+    public override string Version => "0.2.3";
 
     public RealtyLeadsAgent() : this(new ModelResearchPlanner()) { }
     public RealtyLeadsAgent(IResearchPlanner planner) => _planner = planner;
@@ -94,6 +94,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
             try { reply = await ResearchAsync(text, incoming, delegation, context, ct); }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch (PlatformCapabilityException) { reply = Unavailable; }
+            catch (ModelAnswerUnreadableException e) { reply = WithReason(Clarification, e.Diagnostic); }
             catch (JsonException) { reply = Clarification; }
             catch (InvalidOperationException) { reply = "I could not interpret this request. Please specify a state abbreviation and city or county, or a lead ID."; }
         }
@@ -102,6 +103,9 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
 
     internal static bool LooksLikeCredential(string text) =>
         CredentialWords.IsMatch(text) || LongToken.Matches(text).Any(m => !Guid.TryParseExact(m.Value, "D", out _));
+
+    /// <summary>A clarification with the deterministic reason it was given, so a refused request is explainable, not silent.</summary>
+    internal static string WithReason(string clarification, string reason) => $"{clarification}\n\n(Why: {reason}.)";
 
     private async Task<string> ResearchAsync(string text, CommunicationMessageReceivedEvent incoming, DelegationSnapshot? delegation,
         AgentRuntimeContext context, CancellationToken ct)
@@ -119,7 +123,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
             if (lookupId is null)
             {
                 brief = Grounding.GroundedSearch(intent, text);
-                if (brief is null) return Clarification;
+                if (brief is null) return WithReason(Clarification, Grounding.Explain(intent, text));
             }
         }
         if (lookupId is not null)
