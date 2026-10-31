@@ -13,9 +13,13 @@ public sealed record LeadSearch(string? State = null, string? County = null, str
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record LeadLookup(string Id);
 
-/// <summary>The eleven reviewed provider fields. Values are provider records, never verified facts.</summary>
+/// <summary>
+/// The reviewed provider fields: the eleven identity/location values plus three optional obituary-derived values
+/// (plugin 0.2.1+; absent until the provider publishes them). Values are provider records, never verified facts.
+/// </summary>
 public sealed record InheritanceLead(string InheritanceLeadId, string? PropertyId, string? Address, string? OwnerName, string? Status, double? Score,
-    string? DeceasedId, string? DeceasedName, string? CityName, string? CountyName, string? StateAbbreviation);
+    string? DeceasedId, string? DeceasedName, string? CityName, string? CountyName, string? StateAbbreviation,
+    string? DateOfDeath = null, int? TotalHeirs = null, int? ContactableHeirs = null);
 
 /// <summary>Bounded model interpretation of a human request. Internal: tests inject it through the planner seam.</summary>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]

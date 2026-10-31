@@ -1,6 +1,6 @@
 # RealtyLeadsAI Lead Research Analyst
 
-Version 0.2.4 on SDK 5.8.0. An individual-contributor agent that turns a bounded
+Version 0.3.0 on SDK 5.8.0. An individual-contributor agent that turns a bounded
 research brief into a **lead brief** using the two RealtyLeadsAI read capabilities a
 human has explicitly granted. It has no provider key, HTTP client, MCP transport,
 connection selector, outreach or write authority.
