@@ -1,6 +1,6 @@
 # RealtyLeadsAI Lead Research Analyst
 
-Version 0.3.0 on SDK 5.8.0. An individual-contributor agent that turns a bounded
+Version 0.3.1 on SDK 5.8.0. An individual-contributor agent that turns a bounded
 research brief into a **lead brief** using the two RealtyLeadsAI read capabilities a
 human has explicitly granted. It has no provider key, HTTP client, MCP transport,
 connection selector, outreach or write authority.
@@ -63,3 +63,13 @@ required by the runtime's dispatch; the analyst overrides the classifier so it n
 Declarations grant nothing: an approved model and an explicit native read grant are required.
 
 Run `dotnet test` and `dotnet run --project src/CSweet.Agent.RealtyLeadsAI -- --self-test`.
+
+## CI dependency fallback
+
+GitHub Actions uses the pinned SDK and WorkManagement.Contracts versions from NuGet when available.
+An unpublished version is packed from its reviewed full commit in `build/ci-dependencies.json`.
+Update that commit pin together with any SDK or contracts dependency bump; CI rejects mismatched versions.
+Packages stay local to the job and are never pushed to NuGet. The job summary and dependency-provenance
+artifact record origins, source commits and SHA-256 hashes. Private source repositories require the optional
+`CSWEET_DEPENDENCY_READ_TOKEN` Actions secret with read access to the dependency repositories.
+Run `python3 scripts/test-ci-dependencies.py` for the offline resolver regression tests.

@@ -30,7 +30,7 @@ public sealed partial class RealtyLeadsAgent : CSweetAgentBase
     private readonly LeadBriefPublisher _publisher = new();
 
     public override string AgentId => "com.crosswiredstudios.agent.realtyleads";
-    public override string Version => "0.3.0";
+    public override string Version => "0.3.1";
 
     public RealtyLeadsAgent() : this(new ModelResearchPlanner()) { }
     public RealtyLeadsAgent(IResearchPlanner planner) => _planner = planner;
